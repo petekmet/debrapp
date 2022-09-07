@@ -12,7 +12,11 @@ To build docker image locally
 docker build -t petekmet/debr:latest .
 ~~~
 
-To run locally - above steps are optional since there is already docker image on public dockerhub.
+To run locally - above steps are optional since there is already docker image on public dockerhub, see https://hub.docker.com/repository/docker/petekmet/debrapp/general
 ~~~
 ./localRun.sh
 ~~~
+
+Swagger-UI:
+
+http://localhost:8080/swagger-ui.html
