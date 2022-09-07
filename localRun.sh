@@ -1,7 +1,7 @@
-export HTTP_PORT="8080"
+export HTTP_PORT="8085"
 docker run \
 -e HOST_PORT=$HTTP_PORT \
 --rm \
 --name debr \
 -p $HTTP_PORT:$HTTP_PORT/tcp \
-petekmet/debr:latest
+petekmet/debrapp:latest

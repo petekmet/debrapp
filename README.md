@@ -9,7 +9,7 @@ To compile/test/build java app locally
 
 To build docker image locally
 ~~~
-docker build -t petekmet/debr:latest .
+docker build -t petekmet/debrapp:latest .
 ~~~
 
 To run locally - above steps are optional since there is already docker image on public dockerhub, see https://hub.docker.com/repository/docker/petekmet/debrapp/general
