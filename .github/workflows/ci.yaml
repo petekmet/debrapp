@@ -1,0 +1,73 @@
+name: debrapp-ci
+
+on:
+  push:
+    branches:
+      - master
+
+  # Configure workflow to also support triggering manually
+  workflow_dispatch:
+
+# Environment variables are defined so that they can be used throughout the job definitions.
+env:
+  # env for container build
+  APP_NAME: 'debrapp'
+  REPO_NAME: 'petekmet'
+  CONTAINER_REGISTRY: 'docker.io'
+  DOCKERFILE_PATH: '.'
+  TAG: '${{ github.run_id  }}'
+
+# Jobs define the actions that take place when code is pushed to the main branch
+jobs:
+  CI-build-set-versions:
+    name: Set versions
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      branch: ${{ steps.branch.outputs.branch }}
+    steps:
+      # Set App version
+      - name: version
+        run: echo "::set-output name=version::$(date +'%Y-%m-%d.')${{ github.run_number }}"
+        id: version
+      # Set build branch name
+      - name: generate tag with branch name
+        run: echo "::set-output name=branch::${GITHUB_REF##*/}"
+        id: branch
+
+  CI-build-and-publish-docker-image:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        docker_target: [ 'x86_64:linux/amd64', 'arm:linux/arm/v7' ]
+    needs: CI-build-set-versions
+    steps:
+      # Checkout the repo
+      - name: Checkout repository
+        uses: actions/checkout@master
+
+      # Login to Container registry
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+
+      # Diag print
+      - name: print version
+        run: echo ${{ needs.CI-build-set-versions.outputs.version }}
+
+      - name: print branch
+        run: echo ${{ needs.CI-build-set-versions.outputs.branch }}
+
+      - name: Set up Docker Buildx
+        uses: crazy-max/ghaction-docker-buildx@v1
+        with:
+          version: latest
+
+      # Container build and push to a Azure Container Registry (ACR)
+      - run: |
+          docker buildx build --platform linux/amd64,linux/arm/v7 -t ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }} --file ./Dockerfile --output type=image,push=true .
+          docker buildx build --platform linux/amd64,linux/arm/v7 -t ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:latest --file ./Dockerfile --output type=image,push=true .
